@@ -1,4 +1,4 @@
-// pages/TenantDashboard.jsx - With Location-Based Search
+// pages/TenantDashboard.jsx - With Wishlist and Location-Based Search
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
@@ -9,6 +9,8 @@ function TenantDashboard({ user }) {
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState(null);
   const [locationError, setLocationError] = useState('');
+  const [wishlist, setWishlist] = useState([]);
+  const [showWishlistOnly, setShowWishlistOnly] = useState(false);
   const [filters, setFilters] = useState({
     propertyType: '',
     listingType: '',
@@ -16,7 +18,7 @@ function TenantDashboard({ user }) {
     minPrice: '',
     maxPrice: '',
     nearMe: false,
-    radius: 10 // default 10 km
+    radius: 10
   });
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -43,6 +45,12 @@ function TenantDashboard({ user }) {
   ];
 
   useEffect(() => {
+    // Load wishlist from localStorage
+    const savedWishlist = localStorage.getItem(`wishlist_${user.id}`);
+    if (savedWishlist) {
+      setWishlist(JSON.parse(savedWishlist));
+    }
+
     // Get user's location
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -72,7 +80,7 @@ function TenantDashboard({ user }) {
         propertyType: typeParam || ''
       }));
     }
-  }, [searchParams]);
+  }, [searchParams, user.id]);
 
   useEffect(() => {
     fetchProperties();
@@ -133,6 +141,32 @@ function TenantDashboard({ user }) {
       nearMe: false,
       radius: 10
     });
+    setShowWishlistOnly(false);
+  };
+
+  const toggleWishlist = (propertyId, e) => {
+    e.stopPropagation(); // Prevent navigation when clicking heart
+    
+    let updatedWishlist;
+    if (wishlist.includes(propertyId)) {
+      updatedWishlist = wishlist.filter(id => id !== propertyId);
+    } else {
+      updatedWishlist = [...wishlist, propertyId];
+    }
+    
+    setWishlist(updatedWishlist);
+    localStorage.setItem(`wishlist_${user.id}`, JSON.stringify(updatedWishlist));
+  };
+
+  const isInWishlist = (propertyId) => {
+    return wishlist.includes(propertyId);
+  };
+
+  const getDisplayedProperties = () => {
+    if (showWishlistOnly) {
+      return properties.filter(property => wishlist.includes(property._id));
+    }
+    return properties;
   };
 
   const formatPrice = (price) => {
@@ -147,12 +181,24 @@ function TenantDashboard({ user }) {
     return <div className="loading">Loading properties...</div>;
   }
 
+  const displayedProperties = getDisplayedProperties();
+
   return (
     <div className="tenant-dashboard">
       <div className="dashboard-header">
         <div className="container">
-          <h1>Welcome, {user.name}!</h1>
-          <p>Browse available properties and find your dream home</p>
+          <div className="header-content">
+            <div>
+              <h1>Welcome, {user.name}!</h1>
+              <p>Browse available properties and find your dream home</p>
+            </div>
+            <button 
+              className={`btn ${showWishlistOnly ? 'btn-primary' : 'btn-outline'} wishlist-toggle-btn`}
+              onClick={() => setShowWishlistOnly(!showWishlistOnly)}
+            >
+              ❤️ Wishlist ({wishlist.length})
+            </button>
+          </div>
         </div>
       </div>
 
@@ -271,26 +317,30 @@ function TenantDashboard({ user }) {
         {/* Properties Grid */}
         <div className="properties-section">
           <h2>
-            {filters.nearMe 
-              ? `Properties within ${filters.radius} km` 
-              : filters.city 
-                ? `Properties in ${filters.city}` 
-                : 'All Properties'
-            } ({properties.length})
+            {showWishlistOnly 
+              ? `My Wishlist (${displayedProperties.length})`
+              : filters.nearMe 
+                ? `Properties within ${filters.radius} km (${displayedProperties.length})` 
+                : filters.city 
+                  ? `Properties in ${filters.city} (${displayedProperties.length})` 
+                  : `All Properties (${displayedProperties.length})`
+            }
           </h2>
           
-          {properties.length === 0 ? (
+          {displayedProperties.length === 0 ? (
             <div className="no-properties">
               <p>
-                {filters.nearMe 
-                  ? `No properties found within ${filters.radius} km of your location`
-                  : 'No properties found matching your criteria'
+                {showWishlistOnly 
+                  ? 'No properties in your wishlist yet. Start adding some!'
+                  : filters.nearMe 
+                    ? `No properties found within ${filters.radius} km of your location`
+                    : 'No properties found matching your criteria'
                 }
               </p>
             </div>
           ) : (
             <div className="properties-grid">
-              {properties.map(property => (
+              {displayedProperties.map(property => (
                 <div key={property._id} className="property-card" onClick={() => navigate(`/property/${property._id}`)}>
                   <div className="property-image">
                     {property.images && property.images.length > 0 ? (
@@ -309,6 +359,13 @@ function TenantDashboard({ user }) {
                         📍 {property.distance} km from you
                       </span>
                     )}
+                    <button 
+                      className={`wishlist-heart ${isInWishlist(property._id) ? 'active' : ''}`}
+                      onClick={(e) => toggleWishlist(property._id, e)}
+                      title={isInWishlist(property._id) ? 'Remove from wishlist' : 'Add to wishlist'}
+                    >
+                      {isInWishlist(property._id) ? '❤️' : '🤍'}
+                    </button>
                   </div>
                   
                   <div className="property-content">
@@ -322,7 +379,7 @@ function TenantDashboard({ user }) {
                     
                     <div className="property-details">
                       {property.bedrooms && (
-                        <span>🛏️ {property.bedrooms} Beds</span>
+                        <span>🛏 {property.bedrooms} Beds</span>
                       )}
                       {property.bathrooms && (
                         <span>🚿 {property.bathrooms} Baths</span>
