@@ -18,12 +18,8 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use('/uploads', express.static('uploads'));
 
-// Create uploads directory if it doesn't exist
-if (!fs.existsSync('uploads')) {
-  fs.mkdirSync('uploads');
-}
+
 
 // ==================== MONGODB CONNECTION (ATLAS) ====================
 mongoose
@@ -37,20 +33,35 @@ mongoose
 // JWT Secret
 const JWT_SECRET = process.env.JWT_SECRET;
 
-// Multer Configuration
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/');
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + '-' + file.originalname);
-  }
+
+// Cloudinary Setup (replaces multer.diskStorage)
+import { v2 as cloudinary } from 'cloudinary';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
+
+// Configure Cloudinary with your credentials
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const upload = multer({ 
-  storage: storage,
-  limits: { fileSize: 50000000 }
+// Create Cloudinary storage engine
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: async (req, file) => {
+    const resource_type = file.mimetype.startsWith('video/')
+      ? 'video'
+      : 'image';
+    return {
+      folder: 'estatehub-properties',
+      resource_type,
+      allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'mp4', 'mov', 'avi', 'mkv'],
+    };
+  },
 });
+
+const upload = multer({ storage, limits: { fileSize: 50_000_000 } }); // 50MB
+
 
 // User Schema
 const userSchema = new mongoose.Schema({
@@ -369,12 +380,13 @@ app.post('/api/properties', authMiddleware, ownerMiddleware, upload.fields([
       coordinates: coordinates
     };
 
-    if (req.files.images) {
-      propertyData.images = req.files.images.map(file => file.filename);
+    // ✅ FIXED: Properly get Cloudinary URLs
+    if (req.files?.images) {
+      propertyData.images = req.files.images.map(file => file.path); // Cloudinary returns URL in file.path
     }
 
-    if (req.files.video3D) {
-      propertyData.video3D = req.files.video3D[0].filename;
+    if (req.files?.video3D && req.files.video3D[0]) {
+      propertyData.video3D = req.files.video3D[0].path; // Cloudinary returns URL in file.path
     }
 
     const property = new Property(propertyData);
@@ -382,10 +394,11 @@ app.post('/api/properties', authMiddleware, ownerMiddleware, upload.fields([
 
     res.status(201).json(property);
   } catch (error) {
-    console.error(error);
+    console.error('Error creating property:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
+
 
 // Get All Properties with Location-Based Filtering
 app.get('/api/properties', async (req, res) => {
@@ -539,12 +552,13 @@ app.put('/api/properties/:id', authMiddleware, ownerMiddleware, upload.fields([
       };
     }
 
+    // ✅ FIXED: Properly update images and videos
     if (req.files?.images) {
-      updateData.images = req.files.images.map(file => file.filename);
+      updateData.images = req.files.images.map(file => file.path);
     }
 
-    if (req.files?.video3D) {
-      updateData.video3D = req.files.video3D[0].filename;
+    if (req.files?.video3D && req.files.video3D[0]) {
+      updateData.video3D = req.files.video3D[0].path;
     }
 
     const updatedProperty = await Property.findByIdAndUpdate(
@@ -555,10 +569,19 @@ app.put('/api/properties/:id', authMiddleware, ownerMiddleware, upload.fields([
 
     res.json(updatedProperty);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Error updating property:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
+
+
+// ==================== BONUS: Add Cloudinary Error Checking ====================
+// Add this middleware AFTER your Cloudinary config to help debug:
+
+// Test Cloudinary connection on server start
+cloudinary.api.ping()
+  .then(() => console.log('✅ Cloudinary connected successfully'))
+  .catch(err => console.error('❌ Cloudinary connection failed:', err));
 
 // Delete Property (Owner only)
 app.delete('/api/properties/:id', authMiddleware, ownerMiddleware, async (req, res) => {

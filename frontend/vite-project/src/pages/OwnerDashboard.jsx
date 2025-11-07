@@ -412,7 +412,7 @@ function OwnerDashboard({ user }) {
                     <div className="property-image">
                       {property.images && property.images.length > 0 ? (
                         <img 
-                          src={`http://localhost:5000/uploads/${property.images[0]}`} 
+                          src={property.images[0]} 
                           alt={property.title}
                         />
                       ) : (

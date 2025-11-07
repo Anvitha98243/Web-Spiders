@@ -1,4 +1,4 @@
-// pages/PropertyDetails.jsx
+// pages/PropertyDetails.jsx - Updated without Call/Email buttons
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -76,7 +76,7 @@ function PropertyDetails({ user }) {
       setHasExpressedInterest(true);
       setShowInterestModal(false);
       setInterestMessage('');
-      alert('Interest expressed successfully! The owner will be notified.');
+      alert('Interest expressed successfully! The owner will be notified and will contact you directly.');
     } catch (error) {
       console.error('Error expressing interest:', error);
       alert(error.response?.data?.message || 'Failed to express interest');
@@ -139,7 +139,7 @@ function PropertyDetails({ user }) {
               <>
                 <div className="main-image">
                   <img 
-                    src={`http://localhost:5000/uploads/${property.images[currentImageIndex]}`} 
+                    src={property.images[currentImageIndex]} 
                     alt={property.title}
                   />
                   {property.images.length > 1 && (
@@ -156,7 +156,7 @@ function PropertyDetails({ user }) {
                   {property.images.map((img, idx) => (
                     <img
                       key={idx}
-                      src={`http://localhost:5000/uploads/${img}`}
+                      src={img}
                       alt={`${property.title} ${idx + 1}`}
                       className={idx === currentImageIndex ? 'active' : ''}
                       onClick={() => setCurrentImageIndex(idx)}
@@ -173,7 +173,7 @@ function PropertyDetails({ user }) {
               <div className="video-section">
                 <h3>🎥 3D Property Tour</h3>
                 <video controls className="property-video">
-                  <source src={`http://localhost:5000/uploads/${property.video3D}`} type="video/mp4" />
+                  <source src={property.video3D} type="video/mp4" />
                   Your browser does not support the video tag.
                 </video>
               </div>
@@ -201,7 +201,7 @@ function PropertyDetails({ user }) {
                 {hasExpressedInterest ? (
                   <div className="interest-expressed">
                     <span className="interest-badge">✓ Interest Expressed</span>
-                    <p>You have already expressed interest in this property. The owner will contact you soon.</p>
+                    <p>You have already expressed interest in this property. The owner will contact you soon using the details you provided during registration.</p>
                   </div>
                 ) : (
                   <button 
@@ -267,20 +267,24 @@ function PropertyDetails({ user }) {
 
             {!isOwner && (
               <div className="owner-section">
-                <h2>Contact Owner</h2>
+                <h2>Owner Information</h2>
                 <div className="owner-info">
                   <div className="owner-details">
                     <p><strong>Name:</strong> {property.ownerName}</p>
                     <p><strong>Email:</strong> {property.ownerEmail}</p>
                     <p><strong>Phone:</strong> {property.ownerPhone}</p>
                   </div>
-                  <div className="contact-buttons">
-                    <a href={`tel:${property.ownerPhone}`} className="btn btn-primary">
-                      📞 Call Now
-                    </a>
-                    <a href={`mailto:${property.ownerEmail}`} className="btn btn-secondary">
-                      ✉️ Email
-                    </a>
+                  <div className="owner-note">
+                    <p style={{ 
+                      backgroundColor: '#e3f2fd', 
+                      padding: '16px', 
+                      borderRadius: '8px',
+                      color: '#1565c0',
+                      marginTop: '15px',
+                      lineHeight: '1.6'
+                    }}>
+                      💡 <strong>Tip:</strong> Express your interest using the button above, and the owner will contact you directly using your registered contact information.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -300,7 +304,7 @@ function PropertyDetails({ user }) {
             
             <div className="modal-body">
               <p>You are expressing interest in <strong>{property.title}</strong></p>
-              <p>The property owner will be notified and may contact you.</p>
+              <p>The property owner will be notified and will contact you directly using your registered email and phone number.</p>
               
               <div className="form-group">
                 <label className="form-label">Message to Owner (Optional)</label>
@@ -308,7 +312,7 @@ function PropertyDetails({ user }) {
                   value={interestMessage}
                   onChange={(e) => setInterestMessage(e.target.value)}
                   className="form-textarea"
-                  placeholder="Add a message to the owner..."
+                  placeholder="Add a message to the owner... (e.g., preferred viewing time, questions about the property)"
                   rows="4"
                 />
               </div>
