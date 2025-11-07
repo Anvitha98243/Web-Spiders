@@ -1,7 +1,8 @@
-// App.jsx - Complete with inline auth functions
+// Updated App.jsx with centralized API configuration
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_ENDPOINTS } from './config/api'; // Import API config
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -76,7 +77,7 @@ function App() {
         return;
       }
 
-      const response = await axios.get('http://localhost:5000/api/auth/me');
+      const response = await axios.get(API_ENDPOINTS.AUTH.ME); // Use API config
       setUser(response.data);
     } catch (error) {
       console.error('Auth check failed:', error);
