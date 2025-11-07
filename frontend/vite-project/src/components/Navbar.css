@@ -1,0 +1,139 @@
+/* components/Navbar.css */
+.navbar {
+  background-color: var(--primary-color);
+  padding: 1rem 0;
+  box-shadow: var(--shadow);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.navbar-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navbar-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--white);
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 0.3s ease;
+}
+
+.navbar-logo:hover {
+  transform: scale(1.05);
+}
+
+.navbar-logo svg {
+  color: var(--white);
+}
+
+.navbar-menu {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.navbar-link {
+  color: var(--white);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+  position: relative;
+}
+
+.navbar-link::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: var(--accent-color);
+  transition: width 0.3s ease;
+}
+
+.navbar-link:hover::after {
+  width: 100%;
+}
+
+.navbar-link:hover {
+  color: var(--accent-color);
+}
+
+.navbar-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-left: 24px;
+  border-left: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.user-name {
+  color: var(--white);
+  font-weight: 600;
+}
+
+.user-badge {
+  background-color: var(--accent-color);
+  color: var(--white);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.btn-sm {
+  padding: 8px 16px;
+  font-size: 0.9rem;
+}
+
+.btn-outline.btn-sm {
+  border-color: var(--white);
+  color: var(--white);
+}
+
+.btn-outline.btn-sm:hover {
+  background-color: var(--white);
+  color: var(--primary-color);
+}
+
+@media (max-width: 968px) {
+  .navbar-menu {
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  
+  .navbar-logo span {
+    display: none;
+  }
+  
+  .navbar-link {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .navbar-container {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .navbar-menu {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .navbar-user {
+    border-left: none;
+    padding-left: 0;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
