@@ -1,4 +1,4 @@
-// server.js - Backend with Location-Based Search
+// server.js - Backend with Location-Based Search (COMPLETE)
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
@@ -6,19 +6,34 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import multer from 'multer';
 import path from 'path';
-import fs from 'fs';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
+import { v2 as cloudinary } from 'cloudinary';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
+
+// Load environment variables FIRST
+dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Initialize Express app
+const app = express();
+
 // Production CORS configuration
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5173',
-  process.env.FRONTEND_URL // Your Vercel URL will go here
+  process.env.FRONTEND_URL // Your Vercel/Netlify URL
 ];
 
+// Middleware - CORS must come AFTER app initialization
 app.use(cors({
   origin: function(origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -26,17 +41,8 @@ app.use(cors({
   },
   credentials: true
 }));
-dotenv.config();
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
-const app = express();
-
-// Middleware
-app.use(cors());
 app.use(express.json());
-
-
 
 // ==================== MONGODB CONNECTION (ATLAS) ====================
 mongoose
@@ -50,17 +56,17 @@ mongoose
 // JWT Secret
 const JWT_SECRET = process.env.JWT_SECRET;
 
-
-// Cloudinary Setup (replaces multer.diskStorage)
-import { v2 as cloudinary } from 'cloudinary';
-import { CloudinaryStorage } from 'multer-storage-cloudinary';
-
-// Configure Cloudinary with your credentials
+// Cloudinary Setup
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
+
+// Test Cloudinary connection
+cloudinary.api.ping()
+  .then(() => console.log('✅ Cloudinary connected successfully'))
+  .catch(err => console.error('❌ Cloudinary connection failed:', err));
 
 // Create Cloudinary storage engine
 const storage = new CloudinaryStorage({
@@ -78,7 +84,6 @@ const storage = new CloudinaryStorage({
 });
 
 const upload = multer({ storage, limits: { fileSize: 50_000_000 } }); // 50MB
-
 
 // User Schema
 const userSchema = new mongoose.Schema({
@@ -244,7 +249,7 @@ async function createNotification(userId, type, title, message, link = null, rel
   return notification;
 }
 
-// Geocoding helper (simple city to coordinates mapping - in production use real geocoding API)
+// Geocoding helper (simple city to coordinates mapping)
 const cityCoordinates = {
   'hyderabad': [78.4867, 17.3850],
   'mumbai': [72.8777, 19.0760],
@@ -397,13 +402,13 @@ app.post('/api/properties', authMiddleware, ownerMiddleware, upload.fields([
       coordinates: coordinates
     };
 
-    // ✅ FIXED: Properly get Cloudinary URLs
+    // Get Cloudinary URLs
     if (req.files?.images) {
-      propertyData.images = req.files.images.map(file => file.path); // Cloudinary returns URL in file.path
+      propertyData.images = req.files.images.map(file => file.path);
     }
 
     if (req.files?.video3D && req.files.video3D[0]) {
-      propertyData.video3D = req.files.video3D[0].path; // Cloudinary returns URL in file.path
+      propertyData.video3D = req.files.video3D[0].path;
     }
 
     const property = new Property(propertyData);
@@ -415,7 +420,6 @@ app.post('/api/properties', authMiddleware, ownerMiddleware, upload.fields([
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
-
 
 // Get All Properties with Location-Based Filtering
 app.get('/api/properties', async (req, res) => {
@@ -569,7 +573,7 @@ app.put('/api/properties/:id', authMiddleware, ownerMiddleware, upload.fields([
       };
     }
 
-    // ✅ FIXED: Properly update images and videos
+    // Update images and videos
     if (req.files?.images) {
       updateData.images = req.files.images.map(file => file.path);
     }
@@ -590,15 +594,6 @@ app.put('/api/properties/:id', authMiddleware, ownerMiddleware, upload.fields([
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
-
-
-// ==================== BONUS: Add Cloudinary Error Checking ====================
-// Add this middleware AFTER your Cloudinary config to help debug:
-
-// Test Cloudinary connection on server start
-cloudinary.api.ping()
-  .then(() => console.log('✅ Cloudinary connected successfully'))
-  .catch(err => console.error('❌ Cloudinary connection failed:', err));
 
 // Delete Property (Owner only)
 app.delete('/api/properties/:id', authMiddleware, ownerMiddleware, async (req, res) => {
@@ -888,12 +883,24 @@ app.get('/api/stats/dashboard', authMiddleware, async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
-// Health check route for Render
+
+// Health check route for deployment platforms (Render, Railway, etc.)
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', message: 'Server is running' });
 });
+
+// Root route
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'EstateHub API Server', 
+    version: '1.0.0',
+    status: 'Running'
+  });
+});
+
 // Start Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📡 Health check: http://localhost:${PORT}/health`);
 });
