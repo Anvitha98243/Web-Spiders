@@ -1,7 +1,8 @@
-// components/Notifications.jsx - Complete with inline auth
+// components/Notifications.jsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_ENDPOINTS } from '../config/api';
 import './Notifications.css';
 
 function Notifications({ user }) {
@@ -11,7 +12,6 @@ function Notifications({ user }) {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Inline auth helper
   const getAuthToken = () => localStorage.getItem('token');
 
   useEffect(() => {
@@ -31,7 +31,7 @@ function Notifications({ user }) {
 
   const fetchNotifications = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/notifications');
+      const response = await axios.get(API_ENDPOINTS.NOTIFICATIONS.BASE);
       setNotifications(response.data);
     } catch (error) {
       if (error.response?.status !== 401) {
@@ -44,7 +44,7 @@ function Notifications({ user }) {
 
   const fetchUnreadCount = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/notifications/unread-count');
+      const response = await axios.get(API_ENDPOINTS.NOTIFICATIONS.UNREAD_COUNT);
       setUnreadCount(response.data.count);
     } catch (error) {
       if (error.response?.status !== 401) {
@@ -56,7 +56,7 @@ function Notifications({ user }) {
   const handleNotificationClick = async (notification) => {
     try {
       if (!notification.isRead) {
-        await axios.put(`http://localhost:5000/api/notifications/${notification._id}/read`);
+        await axios.put(`${API_ENDPOINTS.NOTIFICATIONS.BY_ID(notification._id)}/read`);
         
         setNotifications(notifications.map(n => 
           n._id === notification._id ? { ...n, isRead: true } : n
@@ -76,7 +76,7 @@ function Notifications({ user }) {
 
   const handleMarkAllRead = async () => {
     try {
-      await axios.put('http://localhost:5000/api/notifications/read-all');
+      await axios.put(API_ENDPOINTS.NOTIFICATIONS.READ_ALL);
       
       setNotifications(notifications.map(n => ({ ...n, isRead: true })));
       setUnreadCount(0);
@@ -89,7 +89,7 @@ function Notifications({ user }) {
     e.stopPropagation();
     
     try {
-      await axios.delete(`http://localhost:5000/api/notifications/${notificationId}`);
+      await axios.delete(API_ENDPOINTS.NOTIFICATIONS.BY_ID(notificationId));
       
       setNotifications(notifications.filter(n => n._id !== notificationId));
       fetchUnreadCount();

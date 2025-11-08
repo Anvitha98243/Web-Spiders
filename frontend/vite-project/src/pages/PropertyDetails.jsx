@@ -1,7 +1,8 @@
-// pages/PropertyDetails.jsx - Updated without Call/Email buttons
+// pages/PropertyDetails.jsx
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_ENDPOINTS } from '../config/api';
 import './PropertyDetails.css';
 
 function PropertyDetails({ user }) {
@@ -24,7 +25,7 @@ function PropertyDetails({ user }) {
 
   const fetchProperty = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/properties/${id}`);
+      const response = await axios.get(API_ENDPOINTS.PROPERTIES.BY_ID(id));
       setProperty(response.data);
     } catch (error) {
       console.error('Error fetching property:', error);
@@ -36,7 +37,7 @@ function PropertyDetails({ user }) {
   const checkExistingInterest = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:5000/api/interests/my-interests', {
+      const response = await axios.get(API_ENDPOINTS.INTERESTS.MY_INTERESTS, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -65,7 +66,7 @@ function PropertyDetails({ user }) {
     try {
       const token = localStorage.getItem('token');
       await axios.post(
-        'http://localhost:5000/api/interests',
+        API_ENDPOINTS.INTERESTS.BASE,
         {
           propertyId: id,
           message: interestMessage
@@ -133,7 +134,6 @@ function PropertyDetails({ user }) {
         </button>
 
         <div className="details-grid">
-          {/* Image Gallery */}
           <div className="image-section">
             {property.images && property.images.length > 0 ? (
               <>
@@ -168,7 +168,6 @@ function PropertyDetails({ user }) {
               <div className="no-image-large">No Images Available</div>
             )}
 
-            {/* 3D Video */}
             {property.video3D && (
               <div className="video-section">
                 <h3>🎥 3D Property Tour</h3>
@@ -180,7 +179,6 @@ function PropertyDetails({ user }) {
             )}
           </div>
 
-          {/* Property Information */}
           <div className="info-section">
             <div className="property-header">
               <div>
@@ -195,7 +193,6 @@ function PropertyDetails({ user }) {
               <div className="property-price-large">{formatPrice(property.price)}</div>
             </div>
 
-            {/* Interest Button for Tenants */}
             {canExpressInterest && !isOwner && (
               <div className="interest-section">
                 {hasExpressedInterest ? (
@@ -293,7 +290,6 @@ function PropertyDetails({ user }) {
         </div>
       </div>
 
-      {/* Interest Modal */}
       {showInterestModal && (
         <div className="modal-overlay" onClick={() => setShowInterestModal(false)}>
           <div className="modal-content interest-modal" onClick={(e) => e.stopPropagation()}>

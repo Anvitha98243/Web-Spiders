@@ -1,7 +1,8 @@
-// pages/TenantDashboard.jsx - With Wishlist and Location-Based Search
+// pages/TenantDashboard.jsx
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
+import { API_ENDPOINTS } from '../config/api';
 import './TenantDashboard.css';
 
 function TenantDashboard({ user }) {
@@ -45,13 +46,11 @@ function TenantDashboard({ user }) {
   ];
 
   useEffect(() => {
-    // Load wishlist from localStorage
     const savedWishlist = localStorage.getItem(`wishlist_${user.id}`);
     if (savedWishlist) {
       setWishlist(JSON.parse(savedWishlist));
     }
 
-    // Get user's location
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -69,7 +68,6 @@ function TenantDashboard({ user }) {
       setLocationError('Geolocation is not supported by your browser.');
     }
 
-    // Apply URL parameters
     const cityParam = searchParams.get('city');
     const typeParam = searchParams.get('type');
     
@@ -96,7 +94,6 @@ function TenantDashboard({ user }) {
       if (filters.minPrice) params.append('minPrice', filters.minPrice);
       if (filters.maxPrice) params.append('maxPrice', filters.maxPrice);
       
-      // Location-based search
       if (filters.nearMe && userLocation) {
         params.append('nearMe', 'true');
         params.append('userLat', userLocation.lat);
@@ -106,7 +103,7 @@ function TenantDashboard({ user }) {
         params.append('city', filters.city);
       }
 
-      const response = await axios.get(`http://localhost:5000/api/properties?${params.toString()}`);
+      const response = await axios.get(`${API_ENDPOINTS.PROPERTIES.BASE}?${params.toString()}`);
       setProperties(response.data);
     } catch (error) {
       console.error('Error fetching properties:', error);
@@ -145,7 +142,7 @@ function TenantDashboard({ user }) {
   };
 
   const toggleWishlist = (propertyId, e) => {
-    e.stopPropagation(); // Prevent navigation when clicking heart
+    e.stopPropagation();
     
     let updatedWishlist;
     if (wishlist.includes(propertyId)) {
@@ -203,11 +200,9 @@ function TenantDashboard({ user }) {
       </div>
 
       <div className="dashboard-content container">
-        {/* Filters Section */}
         <div className="filters-section">
           <h2>Filter Properties</h2>
           
-          {/* Location Search */}
           <div className="location-search">
             <button 
               className={`btn ${filters.nearMe ? 'btn-primary' : 'btn-outline'}`}
@@ -314,7 +309,6 @@ function TenantDashboard({ user }) {
           </div>
         </div>
 
-        {/* Properties Grid */}
         <div className="properties-section">
           <h2>
             {showWishlistOnly 
@@ -360,7 +354,7 @@ function TenantDashboard({ user }) {
                       </span>
                     )}
                     <button 
-                      className={`wishlist-heart ${isInWishlist(property._id) ? 'active' : ''}`}
+                     className={`wishlist-heart ${isInWishlist(property._id) ? 'active' : ''}`}
                       onClick={(e) => toggleWishlist(property._id, e)}
                       title={isInWishlist(property._id) ? 'Remove from wishlist' : 'Add to wishlist'}
                     >

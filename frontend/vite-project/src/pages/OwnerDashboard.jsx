@@ -1,7 +1,8 @@
-// pages/OwnerDashboard.jsx - Updated with Dynamic Form Fields
+// pages/OwnerDashboard.jsx - Part 1
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_ENDPOINTS } from '../config/api';
 import './OwnerDashboard.css';
 
 function OwnerDashboard({ user }) {
@@ -37,7 +38,6 @@ function OwnerDashboard({ user }) {
   const [video3D, setVideo3D] = useState(null);
   const navigate = useNavigate();
 
-  // Property type configurations
   const propertyTypeConfig = {
     house: {
       label: 'House',
@@ -97,7 +97,7 @@ function OwnerDashboard({ user }) {
   const fetchProperties = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:5000/api/properties/owner/my-properties', {
+      const response = await axios.get(API_ENDPOINTS.PROPERTIES.MY_PROPERTIES, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setProperties(response.data);
@@ -111,7 +111,7 @@ function OwnerDashboard({ user }) {
   const fetchInterests = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:5000/api/interests/received', {
+      const response = await axios.get(API_ENDPOINTS.INTERESTS.RECEIVED, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setInterests(response.data);
@@ -124,7 +124,7 @@ function OwnerDashboard({ user }) {
     try {
       const token = localStorage.getItem('token');
       await axios.put(
-        `http://localhost:5000/api/interests/${interestId}`,
+        API_ENDPOINTS.INTERESTS.BY_ID(interestId),
         { status },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -141,12 +141,10 @@ function OwnerDashboard({ user }) {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
 
-    // Reset fields that don't apply to the selected property type
     if (name === 'propertyType') {
       const config = propertyTypeConfig[value];
       const newFormData = { ...formData, propertyType: value, amenities: [] };
       
-      // Clear fields that aren't applicable
       if (!config.fields.includes('bedrooms')) newFormData.bedrooms = '';
       if (!config.fields.includes('bathrooms')) newFormData.bathrooms = '';
       if (!config.fields.includes('floors')) newFormData.floors = '';
@@ -154,7 +152,6 @@ function OwnerDashboard({ user }) {
       if (!config.fields.includes('yearBuilt')) newFormData.yearBuilt = '';
       if (!config.fields.includes('furnishing')) newFormData.furnishing = 'unfurnished';
       
-      // Set default area unit based on property type
       if (value === 'land' || value === 'agriculture') {
         newFormData.areaUnit = 'acres';
       } else {
@@ -206,13 +203,13 @@ function OwnerDashboard({ user }) {
       const token = localStorage.getItem('token');
       if (editingProperty) {
         await axios.put(
-          `http://localhost:5000/api/properties/${editingProperty._id}`,
+          API_ENDPOINTS.PROPERTIES.BY_ID(editingProperty._id),
           data,
           { headers: { Authorization: `Bearer ${token}` } }
         );
       } else {
         await axios.post(
-          'http://localhost:5000/api/properties',
+          API_ENDPOINTS.PROPERTIES.BASE,
           data,
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -257,7 +254,7 @@ function OwnerDashboard({ user }) {
 
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:5000/api/properties/${id}`, {
+      await axios.delete(API_ENDPOINTS.PROPERTIES.BY_ID(id), {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchProperties();
@@ -320,13 +317,14 @@ function OwnerDashboard({ user }) {
   const pendingInterests = interests.filter(i => i.status === 'pending').length;
   const acceptedInterests = interests.filter(i => i.status === 'accepted').length;
 
-  // Get current property type configuration
   const currentConfig = propertyTypeConfig[formData.propertyType];
   const showField = (fieldName) => currentConfig.fields.includes(fieldName);
 
   if (loading) {
     return <div className="loading">Loading...</div>;
   }
+
+// ... (Part 1 code above)
 
   return (
     <div className="owner-dashboard">
@@ -548,7 +546,7 @@ function OwnerDashboard({ user }) {
         )}
       </div>
 
-      {/* Property Modal with Dynamic Form */}
+      {/* Property Modal */}
       {showModal && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -683,7 +681,7 @@ function OwnerDashboard({ user }) {
                 </div>
               </div>
 
-              {/* Dynamic Fields Based on Property Type */}
+              {/* Dynamic Fields */}
               <div className="form-row">
                 {showField('bedrooms') && (
                   <div className="form-group">
@@ -808,10 +806,7 @@ function OwnerDashboard({ user }) {
               </div>
 
               <div className="form-group">
-                <label className="form-label">
-                  Amenities / Features
-                  <span className="form-helper"> (Select all that apply)</span>
-                </label>
+                <label className="form-label">Amenities / Features</label>
                 <div className="amenities-grid">
                   {currentConfig.amenities.map(amenity => (
                     <label key={amenity} className="checkbox-label">
@@ -835,7 +830,6 @@ function OwnerDashboard({ user }) {
                   onChange={handleImageChange}
                   className="form-input"
                 />
-                <small className="form-helper">Upload high-quality images of your property</small>
               </div>
 
               <div className="form-group">
@@ -846,7 +840,6 @@ function OwnerDashboard({ user }) {
                   onChange={handleVideoChange}
                   className="form-input"
                 />
-                <small className="form-helper">Upload a video tour of your property</small>
               </div>
 
               <div className="modal-actions">

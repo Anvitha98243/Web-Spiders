@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_ENDPOINTS } from '../config/api';
 import './Auth.css';
 
 function Register({ onLogin }) {
@@ -39,7 +40,7 @@ function Register({ onLogin }) {
 
     try {
       const { confirmPassword, ...registerData } = formData;
-      const response = await axios.post('http://localhost:5000/api/auth/register', registerData);
+      const response = await axios.post(API_ENDPOINTS.AUTH.REGISTER, registerData);
       onLogin(response.data.user, response.data.token);
       
       if (response.data.user.role === 'owner') {

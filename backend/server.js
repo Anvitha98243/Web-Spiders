@@ -21,10 +21,12 @@ const __dirname = path.dirname(__filename);
 const app = express();
 
 // Production CORS configuration
+// Production CORS configuration
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5173',
-  process.env.FRONTEND_URL // Your Vercel/Netlify URL
+  'https://estatehub-frontend.onrender.com', // ADD YOUR ACTUAL FRONTEND URL HERE
+  process.env.FRONTEND_URL
 ];
 
 // Middleware - CORS must come AFTER app initialization
