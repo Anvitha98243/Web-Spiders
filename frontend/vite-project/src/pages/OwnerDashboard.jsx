@@ -1,4 +1,4 @@
-// pages/OwnerDashboard.jsx - Part 1
+// pages/OwnerDashboard.jsx - COMPLETE FIXED VERSION
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -13,6 +13,9 @@ function OwnerDashboard({ user }) {
   const [editingProperty, setEditingProperty] = useState(null);
   const [activeTab, setActiveTab] = useState('properties');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -97,12 +100,24 @@ function OwnerDashboard({ user }) {
   const fetchProperties = async () => {
     try {
       const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No token found');
+        navigate('/login');
+        return;
+      }
+
+      console.log('Fetching properties with token:', token.substring(0, 20) + '...');
       const response = await axios.get(API_ENDPOINTS.PROPERTIES.MY_PROPERTIES, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      console.log('Properties fetched:', response.data);
       setProperties(response.data);
     } catch (error) {
       console.error('Error fetching properties:', error);
+      console.error('Error response:', error.response?.data);
+      if (error.response?.status === 401) {
+        navigate('/login');
+      }
     } finally {
       setLoading(false);
     }
@@ -172,54 +187,126 @@ function OwnerDashboard({ user }) {
   };
 
   const handleImageChange = (e) => {
-    setImages(Array.from(e.target.files));
+    const files = Array.from(e.target.files);
+    console.log('Images selected:', files.length);
+    setImages(files);
   };
 
   const handleVideoChange = (e) => {
-    setVideo3D(e.target.files[0]);
+    const file = e.target.files[0];
+    console.log('Video selected:', file?.name);
+    setVideo3D(file);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    setSubmitting(true);
 
-    const data = new FormData();
-    Object.keys(formData).forEach(key => {
-      if (key === 'amenities') {
-        data.append(key, JSON.stringify(formData[key]));
-      } else {
-        data.append(key, formData[key]);
-      }
-    });
-
-    images.forEach(image => {
-      data.append('images', image);
-    });
-
-    if (video3D) {
-      data.append('video3D', video3D);
-    }
+    console.log('=== FORM SUBMISSION STARTED ===');
+    console.log('Form Data:', formData);
+    console.log('Images:', images.length);
+    console.log('Video:', video3D?.name);
 
     try {
+      // Validate token
       const token = localStorage.getItem('token');
-      if (editingProperty) {
-        await axios.put(
-          API_ENDPOINTS.PROPERTIES.BY_ID(editingProperty._id),
-          data,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-      } else {
-        await axios.post(
-          API_ENDPOINTS.PROPERTIES.BASE,
-          data,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+      if (!token) {
+        throw new Error('No authentication token found. Please login again.');
       }
 
-      fetchProperties();
+      // Create FormData
+      const data = new FormData();
+      
+      // Add all form fields
+      Object.keys(formData).forEach(key => {
+        if (key === 'amenities') {
+          data.append(key, JSON.stringify(formData[key]));
+        } else if (formData[key] !== '' && formData[key] !== null) {
+          data.append(key, formData[key]);
+        }
+      });
+
+      // Add images
+      if (images.length > 0) {
+        images.forEach((image, index) => {
+          console.log(`Adding image ${index + 1}:`, image.name);
+          data.append('images', image);
+        });
+      }
+
+      // Add video
+      if (video3D) {
+        console.log('Adding video:', video3D.name);
+        data.append('video3D', video3D);
+      }
+
+      // Log FormData contents
+      console.log('FormData contents:');
+      for (let pair of data.entries()) {
+        console.log(pair[0], ':', pair[1]);
+      }
+
+      const config = {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          console.log('Upload progress:', percentCompleted + '%');
+        }
+      };
+
+      let response;
+      if (editingProperty) {
+        console.log('Updating property:', editingProperty._id);
+        response = await axios.put(
+          API_ENDPOINTS.PROPERTIES.BY_ID(editingProperty._id),
+          data,
+          config
+        );
+        console.log('Property updated successfully:', response.data);
+        alert('Property updated successfully!');
+      } else {
+        console.log('Creating new property...');
+        response = await axios.post(
+          API_ENDPOINTS.PROPERTIES.BASE,
+          data,
+          config
+        );
+        console.log('Property created successfully:', response.data);
+        alert('Property added successfully!');
+      }
+
+      await fetchProperties();
       closeModal();
     } catch (error) {
-      console.error('Error saving property:', error);
-      alert('Error saving property. Please try again.');
+      console.error('=== ERROR SUBMITTING PROPERTY ===');
+      console.error('Error:', error);
+      console.error('Response:', error.response?.data);
+      console.error('Status:', error.response?.status);
+      
+      let errorMessage = 'Error saving property. ';
+      
+      if (error.response?.status === 401) {
+        errorMessage = 'Authentication failed. Please login again.';
+        setTimeout(() => navigate('/login'), 2000);
+      } else if (error.response?.status === 403) {
+        errorMessage = 'You do not have permission to perform this action.';
+      } else if (error.response?.data?.message) {
+        errorMessage += error.response.data.message;
+      } else if (error.message) {
+        errorMessage += error.message;
+      } else {
+        errorMessage += 'Please try again.';
+      }
+      
+      setError(errorMessage);
+      alert(errorMessage);
+    } finally {
+      setSubmitting(false);
+      console.log('=== FORM SUBMISSION ENDED ===');
     }
   };
 
@@ -257,6 +344,7 @@ function OwnerDashboard({ user }) {
       await axios.delete(API_ENDPOINTS.PROPERTIES.BY_ID(id), {
         headers: { Authorization: `Bearer ${token}` }
       });
+      alert('Property deleted successfully!');
       fetchProperties();
     } catch (error) {
       console.error('Error deleting property:', error);
@@ -267,6 +355,7 @@ function OwnerDashboard({ user }) {
   const closeModal = () => {
     setShowModal(false);
     setEditingProperty(null);
+    setError('');
     setFormData({
       title: '',
       description: '',
@@ -324,8 +413,6 @@ function OwnerDashboard({ user }) {
     return <div className="loading">Loading...</div>;
   }
 
-// ... (Part 1 code above)
-
   return (
     <div className="owner-dashboard">
       <div className="dashboard-header">
@@ -336,6 +423,12 @@ function OwnerDashboard({ user }) {
       </div>
 
       <div className="dashboard-content container">
+        {error && (
+          <div className="error-message" style={{ marginBottom: '20px' }}>
+            {error}
+          </div>
+        )}
+
         <div className="dashboard-tabs">
           <button 
             className={`tab-btn ${activeTab === 'properties' ? 'active' : ''}`}
@@ -555,6 +648,12 @@ function OwnerDashboard({ user }) {
               <button className="close-btn" onClick={closeModal}>&times;</button>
             </div>
             
+            {error && (
+              <div className="error-message" style={{ margin: '20px' }}>
+                {error}
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="property-form">
               <div className="form-row">
                 <div className="form-group">
@@ -830,6 +929,11 @@ function OwnerDashboard({ user }) {
                   onChange={handleImageChange}
                   className="form-input"
                 />
+                {images.length > 0 && (
+                  <p style={{ marginTop: '8px', color: '#666' }}>
+                    {images.length} image(s) selected
+                  </p>
+                )}
               </div>
 
               <div className="form-group">
@@ -840,14 +944,31 @@ function OwnerDashboard({ user }) {
                   onChange={handleVideoChange}
                   className="form-input"
                 />
+                {video3D && (
+                  <p style={{ marginTop: '8px', color: '#666' }}>
+                    Video selected: {video3D.name}
+                  </p>
+                )}
               </div>
 
               <div className="modal-actions">
-                <button type="button" onClick={closeModal} className="btn btn-secondary">
+                <button 
+                  type="button" 
+                  onClick={closeModal} 
+                  className="btn btn-secondary"
+                  disabled={submitting}
+                >
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary">
-                  {editingProperty ? 'Update Property' : 'Add Property'}
+                <button 
+                  type="submit" 
+                  className="btn btn-primary"
+                  disabled={submitting}
+                >
+                  {submitting 
+                    ? (editingProperty ? 'Updating...' : 'Adding...') 
+                    : (editingProperty ? 'Update Property' : 'Add Property')
+                  }
                 </button>
               </div>
             </form>
