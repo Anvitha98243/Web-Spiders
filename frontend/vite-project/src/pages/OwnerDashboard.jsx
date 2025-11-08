@@ -612,12 +612,6 @@ function OwnerDashboard({ user }) {
                         >
                           ✗ Reject
                         </button>
-                        <a href={`tel:${interest.tenantPhone}`} className="btn btn-secondary btn-sm">
-                          📞 Call
-                        </a>
-                        <a href={`mailto:${interest.tenantEmail}`} className="btn btn-outline btn-sm">
-                          ✉️ Email
-                        </a>
                       </div>
                     )}
 

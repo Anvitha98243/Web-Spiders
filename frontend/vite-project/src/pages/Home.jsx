@@ -1,6 +1,8 @@
-// pages/Home.jsx - With Location-Based Search
+// pages/Home.jsx - FINAL FIXED VERSION
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { API_ENDPOINTS } from '../config/api';
 import './Home.css';
 
 function Home() {
@@ -8,6 +10,8 @@ function Home() {
   const [selectedType, setSelectedType] = useState('');
   const [userLocation, setUserLocation] = useState(null);
   const [nearMeActive, setNearMeActive] = useState(false);
+  const [featuredProperties, setFeaturedProperties] = useState([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   const propertyTypes = [
@@ -32,17 +36,30 @@ function Home() {
           });
         },
         (error) => {
-          console.error('Error getting location:', error);
+          console.log('Location not available');
         }
       );
     }
+
+    // Fetch featured properties
+    fetchFeaturedProperties();
   }, []);
+
+  const fetchFeaturedProperties = async () => {
+    try {
+      const response = await axios.get(API_ENDPOINTS.PROPERTIES.BASE);
+      setFeaturedProperties(response.data.slice(0, 6));
+    } catch (error) {
+      console.error('Error fetching properties:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSearch = () => {
     const params = new URLSearchParams();
     
     if (nearMeActive && userLocation) {
-      // Navigate to tenant dashboard with near me search
       params.append('nearMe', 'true');
       params.append('userLat', userLocation.lat);
       params.append('userLon', userLocation.lon);
@@ -68,19 +85,27 @@ function Home() {
     }
   };
 
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0
+    }).format(price);
+  };
+
   return (
     <div className="home">
       {/* Hero Section */}
       <section className="hero-section">
         <div className="hero-overlay"></div>
         <div className="hero-content container">
-          <h1 className="hero-title fade-in">Find Your Dream Home</h1>
-          <p className="hero-subtitle fade-in">
+          <h1 className="hero-title">Find Your Dream Home</h1>
+          <p className="hero-subtitle">
             Discover the perfect property from our extensive collection of luxury homes, apartments, and condos.
           </p>
 
           {/* Property Type Selection */}
-          <div className="property-types fade-in">
+          <div className="property-types">
             {propertyTypes.map(type => (
               <button
                 key={type.id}
@@ -94,7 +119,7 @@ function Home() {
           </div>
 
           {/* Search Bar */}
-          <div className="search-bar fade-in">
+          <div className="search-bar">
             <button 
               className={`near-me-btn ${nearMeActive ? 'active' : ''}`}
               onClick={handleNearMeClick}
@@ -105,7 +130,7 @@ function Home() {
                 <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
                 <path d="M12 2v4M12 18v4M22 12h-4M6 12H2" stroke="currentColor" strokeWidth="2"/>
               </svg>
-              {nearMeActive ? 'Near Me' : 'Near Me'}
+              Near Me
             </button>
             
             <div className="search-input-group">
@@ -136,6 +161,115 @@ function Home() {
           </div>
         </div>
       </section>
+
+      {/* Featured Properties Section */}
+      {!loading && featuredProperties.length > 0 && (
+        <section className="featured-properties-section" style={{ padding: '80px 0', backgroundColor: '#f8f9fa' }}>
+          <div className="container">
+            <h2 className="section-title">Featured Properties</h2>
+            <p style={{ textAlign: 'center', color: '#666', fontSize: '1.1rem', marginBottom: '40px' }}>
+              Explore our handpicked selection of premium properties
+            </p>
+            
+            <div className="grid grid-3">
+              {featuredProperties.map(property => (
+                <div 
+                  key={property._id} 
+                  className="card"
+                  onClick={() => navigate(`/property/${property._id}`)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <div style={{ position: 'relative', width: '100%', height: '220px', overflow: 'hidden', borderRadius: '12px 12px 0 0' }}>
+                    {property.images && property.images.length > 0 ? (
+                      <img 
+                        src={property.images[0]} 
+                        alt={property.title}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    ) : (
+                      <div style={{ 
+                        width: '100%', 
+                        height: '100%', 
+                        background: 'linear-gradient(135deg, #667eea20 0%, #764ba220 100%)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#999',
+                        fontSize: '1.2rem'
+                      }}>
+                        No Image
+                      </div>
+                    )}
+                    <span style={{
+                      position: 'absolute',
+                      top: '15px',
+                      left: '15px',
+                      backgroundColor: property.listingType === 'rent' ? '#48bb78' : '#4299e1',
+                      color: 'white',
+                      padding: '8px 16px',
+                      borderRadius: '8px',
+                      fontSize: '0.85rem',
+                      fontWeight: '600'
+                    }}>
+                      {property.listingType === 'rent' ? 'For Rent' : 'For Sale'}
+                    </span>
+                  </div>
+                  
+                  <div style={{ padding: '20px' }}>
+                    <h3 style={{ 
+                      fontSize: '1.2rem', 
+                      fontWeight: '700', 
+                      color: '#2d3748', 
+                      marginBottom: '10px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      {property.title}
+                    </h3>
+                    <p style={{ fontSize: '0.95rem', color: '#718096', marginBottom: '8px' }}>
+                      📍 {property.city}, {property.state}
+                    </p>
+                    <p style={{ fontSize: '0.95rem', color: '#718096', marginBottom: '15px' }}>
+                      🏠 {property.propertyType.charAt(0).toUpperCase() + property.propertyType.slice(1)}
+                    </p>
+                    
+                    <div style={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'center',
+                      paddingTop: '15px',
+                      borderTop: '2px solid #e2e8f0'
+                    }}>
+                      <div style={{ fontSize: '1.4rem', fontWeight: '700', color: '#667eea' }}>
+                        {formatPrice(property.price)}
+                      </div>
+                      <button 
+                        className="btn btn-primary btn-sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/property/${property._id}`);
+                        }}
+                      >
+                        View
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div style={{ textAlign: 'center', marginTop: '50px' }}>
+              <button 
+                onClick={() => navigate('/tenant-dashboard')}
+                className="btn btn-primary btn-lg"
+              >
+                View All Properties
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Features Section */}
       <section className="features-section">
