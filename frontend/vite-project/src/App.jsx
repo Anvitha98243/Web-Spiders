@@ -1,4 +1,4 @@
-// App.jsx - Fixed to Stay on Same Route After Reload
+// App.jsx - Fixed to Stay on Same Route After Reload (WITH DEBUGGING)
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
@@ -14,17 +14,22 @@ import './App.css';
 
 // Protected Route Component - Only redirects if not authenticated
 function ProtectedRoute({ children, user, requiredRole }) {
+  console.log('ProtectedRoute - User:', user, 'Required Role:', requiredRole);
+  
   // If no user, redirect to login
   if (!user) {
+    console.log('No user found, redirecting to login');
     return <Navigate to="/login" replace />;
   }
 
   // If user has wrong role, redirect to their correct dashboard
   if (requiredRole && user.role !== requiredRole) {
+    console.log('Wrong role, redirecting to correct dashboard');
     return <Navigate to={user.role === 'owner' ? '/owner-dashboard' : '/tenant-dashboard'} replace />;
   }
 
   // Otherwise, render the children
+  console.log('User authenticated, rendering protected route');
   return children;
 }
 
@@ -33,31 +38,42 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('App mounting - checking authentication...');
+    
     // Check for existing authentication on mount
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
     
+    console.log('Token exists:', !!token);
+    console.log('User data exists:', !!userData);
+    
     if (token && userData) {
       try {
         const parsedUser = JSON.parse(userData);
+        console.log('Parsed user:', parsedUser);
         setUser(parsedUser);
       } catch (error) {
         console.error('Error parsing user data:', error);
         localStorage.removeItem('token');
         localStorage.removeItem('user');
       }
+    } else {
+      console.log('No token or user data found');
     }
     
     setLoading(false);
+    console.log('Authentication check complete');
   }, []);
 
   const handleLogin = (userData, token) => {
+    console.log('Login successful:', userData);
     setUser(userData);
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(userData));
   };
 
   const handleLogout = () => {
+    console.log('Logging out...');
     setUser(null);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -65,12 +81,15 @@ function App() {
 
   // Show loading state while checking authentication
   if (loading) {
+    console.log('Showing loading state...');
     return (
       <div className="loading">
         <div>Loading...</div>
       </div>
     );
   }
+
+  console.log('Rendering App with user:', user);
 
   return (
     <Router>
