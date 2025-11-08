@@ -14,6 +14,8 @@ export default defineConfig({
         manualChunks: undefined,
       },
     },
+    // Ensure all assets are copied
+    copyPublicDir: true,
   },
   publicDir: 'public', // Ensure public folder is copied
   server: {
@@ -22,4 +24,6 @@ export default defineConfig({
   preview: {
     port: 3000,
   },
+  // Handle routing for SPA
+  base: '/',
 })

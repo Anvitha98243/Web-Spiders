@@ -1,108 +1,99 @@
-// Updated App.jsx with centralized API configuration
+// App.jsx - Fixed Reload Issue
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import axios from 'axios';
-import { API_ENDPOINTS } from './config/api'; // Import API config
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import OwnerDashboard from './pages/OwnerDashboard';
 import TenantDashboard from './pages/TenantDashboard';
+import OwnerDashboard from './pages/OwnerDashboard';
 import PropertyDetails from './pages/PropertyDetails';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import './App.css';
 
-// Inline auth helper functions
-const getAuthToken = () => localStorage.getItem('token');
-const setAuthToken = (token) => token && localStorage.setItem('token', token);
-const removeAuthToken = () => localStorage.removeItem('token');
+// Protected Route Component
+function ProtectedRoute({ children, user, requiredRole }) {
+  const location = useLocation();
 
-const isTokenExpired = (token) => {
-  if (!token) return true;
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    return payload.exp * 1000 < Date.now();
-  } catch (error) {
-    return true;
+  if (!user) {
+    // Redirect to login but save the attempted location
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
-};
 
-const validateAuth = () => {
-  const token = getAuthToken();
-  if (!token || isTokenExpired(token)) {
-    removeAuthToken();
-    return false;
+  if (requiredRole && user.role !== requiredRole) {
+    // Redirect to appropriate dashboard if wrong role
+    return <Navigate to={user.role === 'owner' ? '/owner-dashboard' : '/tenant-dashboard'} replace />;
   }
-  return true;
-};
 
-// Set up axios interceptors
-axios.interceptors.request.use(
-  (config) => {
-    const token = getAuthToken();
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+  return children;
+}
 
-// Handle 401 errors globally
-axios.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      removeAuthToken();
-      window.location.href = '/login';
-    }
-    return Promise.reject(error);
+// Public Route Component (redirects if already logged in)
+function PublicRoute({ children, user }) {
+  if (user) {
+    return <Navigate to={user.role === 'owner' ? '/owner-dashboard' : '/tenant-dashboard'} replace />;
   }
-);
+  return children;
+}
 
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    checkAuth();
+    // Check for existing authentication on mount
+    const verifyAuth = async () => {
+      const token = localStorage.getItem('token');
+      const userData = localStorage.getItem('user');
+      
+      if (token && userData) {
+        try {
+          const parsedUser = JSON.parse(userData);
+          
+          // Optional: Verify token is still valid with backend
+          // Uncomment the code below to add token verification
+          /*
+          const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/me`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          
+          if (!response.ok) {
+            throw new Error('Token invalid');
+          }
+          */
+          
+          setUser(parsedUser);
+        } catch (error) {
+          console.error('Error verifying authentication:', error);
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+        }
+      }
+      
+      setLoading(false);
+    };
+
+    verifyAuth();
   }, []);
 
-  const checkAuth = async () => {
-    try {
-      if (!validateAuth()) {
-        setLoading(false);
-        return;
-      }
-
-      const response = await axios.get(API_ENDPOINTS.AUTH.ME); // Use API config
-      setUser(response.data);
-    } catch (error) {
-      console.error('Auth check failed:', error);
-      removeAuthToken();
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleLogin = (userData, token) => {
-    setAuthToken(token);
     setUser(userData);
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(userData));
   };
 
   const handleLogout = () => {
-    removeAuthToken();
     setUser(null);
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
   };
 
+  // Show loading state while checking authentication
   if (loading) {
     return (
-      <div className="loading-screen">
-        <div className="spinner"></div>
-        <p>Loading...</p>
+      <div className="loading">
+        <div>Loading...</div>
       </div>
     );
   }
@@ -112,31 +103,57 @@ function App() {
       <div className="App">
         <Navbar user={user} onLogout={handleLogout} />
         <Routes>
+          {/* Public Routes */}
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact user={user} />} />
           
+          {/* Auth Routes - Redirect if already logged in */}
           <Route 
             path="/login" 
-            element={user ? <Navigate to={user.role === 'owner' ? '/owner-dashboard' : '/tenant-dashboard'} /> : <Login onLogin={handleLogin} />} 
+            element={
+              <PublicRoute user={user}>
+                <Login onLogin={handleLogin} />
+              </PublicRoute>
+            } 
           />
-          
           <Route 
             path="/register" 
-            element={user ? <Navigate to={user.role === 'owner' ? '/owner-dashboard' : '/tenant-dashboard'} /> : <Register onLogin={handleLogin} />} 
+            element={
+              <PublicRoute user={user}>
+                <Register onLogin={handleLogin} />
+              </PublicRoute>
+            } 
           />
           
-          <Route 
-            path="/owner-dashboard" 
-            element={user && user.role === 'owner' ? <OwnerDashboard user={user} /> : <Navigate to="/login" />} 
-          />
-          
+          {/* Protected Routes */}
           <Route 
             path="/tenant-dashboard" 
-            element={user && user.role === 'tenant' ? <TenantDashboard user={user} /> : <Navigate to="/login" />} 
+            element={
+              <ProtectedRoute user={user} requiredRole="tenant">
+                <TenantDashboard user={user} />
+              </ProtectedRoute>
+            } 
           />
-          
-          <Route path="/property/:id" element={<PropertyDetails user={user} />} />
+          <Route 
+            path="/owner-dashboard" 
+            element={
+              <ProtectedRoute user={user} requiredRole="owner">
+                <OwnerDashboard user={user} />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/property/:id" 
+            element={
+              <ProtectedRoute user={user}>
+                <PropertyDetails user={user} />
+              </ProtectedRoute>
+            } 
+          />
+
+          {/* Fallback Route */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
     </Router>
