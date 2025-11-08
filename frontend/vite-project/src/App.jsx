@@ -1,5 +1,5 @@
-// App.jsx - Fixed Reload Issue
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+// App.jsx - Fixed to Stay on Same Route After Reload
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
@@ -12,28 +12,19 @@ import About from './pages/About';
 import Contact from './pages/Contact';
 import './App.css';
 
-// Protected Route Component
+// Protected Route Component - Only redirects if not authenticated
 function ProtectedRoute({ children, user, requiredRole }) {
-  const location = useLocation();
-
+  // If no user, redirect to login
   if (!user) {
-    // Redirect to login but save the attempted location
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/login" replace />;
   }
 
+  // If user has wrong role, redirect to their correct dashboard
   if (requiredRole && user.role !== requiredRole) {
-    // Redirect to appropriate dashboard if wrong role
     return <Navigate to={user.role === 'owner' ? '/owner-dashboard' : '/tenant-dashboard'} replace />;
   }
 
-  return children;
-}
-
-// Public Route Component (redirects if already logged in)
-function PublicRoute({ children, user }) {
-  if (user) {
-    return <Navigate to={user.role === 'owner' ? '/owner-dashboard' : '/tenant-dashboard'} replace />;
-  }
+  // Otherwise, render the children
   return children;
 }
 
@@ -43,38 +34,21 @@ function App() {
 
   useEffect(() => {
     // Check for existing authentication on mount
-    const verifyAuth = async () => {
-      const token = localStorage.getItem('token');
-      const userData = localStorage.getItem('user');
-      
-      if (token && userData) {
-        try {
-          const parsedUser = JSON.parse(userData);
-          
-          // Optional: Verify token is still valid with backend
-          // Uncomment the code below to add token verification
-          /*
-          const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/me`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          
-          if (!response.ok) {
-            throw new Error('Token invalid');
-          }
-          */
-          
-          setUser(parsedUser);
-        } catch (error) {
-          console.error('Error verifying authentication:', error);
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-        }
+    const token = localStorage.getItem('token');
+    const userData = localStorage.getItem('user');
+    
+    if (token && userData) {
+      try {
+        const parsedUser = JSON.parse(userData);
+        setUser(parsedUser);
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
       }
-      
-      setLoading(false);
-    };
-
-    verifyAuth();
+    }
+    
+    setLoading(false);
   }, []);
 
   const handleLogin = (userData, token) => {
@@ -103,30 +77,22 @@ function App() {
       <div className="App">
         <Navbar user={user} onLogout={handleLogout} />
         <Routes>
-          {/* Public Routes */}
+          {/* Public Routes - Always accessible */}
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact user={user} />} />
           
-          {/* Auth Routes - Redirect if already logged in */}
+          {/* Auth Routes - Accessible even if logged in */}
           <Route 
             path="/login" 
-            element={
-              <PublicRoute user={user}>
-                <Login onLogin={handleLogin} />
-              </PublicRoute>
-            } 
+            element={<Login onLogin={handleLogin} />} 
           />
           <Route 
             path="/register" 
-            element={
-              <PublicRoute user={user}>
-                <Register onLogin={handleLogin} />
-              </PublicRoute>
-            } 
+            element={<Register onLogin={handleLogin} />} 
           />
           
-          {/* Protected Routes */}
+          {/* Protected Routes - Require authentication */}
           <Route 
             path="/tenant-dashboard" 
             element={
@@ -146,9 +112,7 @@ function App() {
           <Route 
             path="/property/:id" 
             element={
-              <ProtectedRoute user={user}>
-                <PropertyDetails user={user} />
-              </ProtectedRoute>
+              <PropertyDetails user={user} />
             } 
           />
 
