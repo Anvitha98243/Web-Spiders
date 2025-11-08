@@ -335,7 +335,7 @@ function TenantDashboard({ user }) {
           ) : (
             <div className="properties-grid">
               {displayedProperties.map(property => (
-                <div key={property._id} className="property-card" onClick={() => navigate(`/property/${property._id}`)}>
+                <div key={property._id} className="property-card">
                   <div className="property-image">
                     {property.images && property.images.length > 0 ? (
                       <img 
@@ -367,23 +367,16 @@ function TenantDashboard({ user }) {
                     <p className="property-location">
                       📍 {property.address}, {property.city}
                     </p>
-                    <p className="property-type">
-                      🏠 {property.propertyType.charAt(0).toUpperCase() + property.propertyType.slice(1)}
-                    </p>
                     
-                    <div className="property-details">
-                      {property.bedrooms && (
-                        <span>🛏 {property.bedrooms} Beds</span>
-                      )}
-                      {property.bathrooms && (
-                        <span>🚿 {property.bathrooms} Baths</span>
-                      )}
-                      <span>📏 {property.area} {property.areaUnit}</span>
-                    </div>
                     
                     <div className="property-footer">
                       <div className="property-price">{formatPrice(property.price)}</div>
-                      <button className="btn btn-primary btn-sm">View Details</button>
+                      <button 
+                        className="btn btn-primary btn-sm"
+                        onClick={() => navigate(`/property/${property._id}`)}
+                      >
+                        View Details
+                      </button>
                     </div>
                   </div>
                 </div>
