@@ -74,13 +74,13 @@ function Contact({ user }) {
               <div className="info-card">
                 <div className="info-icon">📧</div>
                 <h3>Email</h3>
-                <p>contact@estatehub.com</p>
+                <p>vasanta2609@gmail.com</p>
               </div>
 
               <div className="info-card">
                 <div className="info-icon">📞</div>
                 <h3>Phone</h3>
-                <p>+91 (234) 567-890</p>
+                <p>9949528256</p>
               </div>
 
               <div className="info-card">
