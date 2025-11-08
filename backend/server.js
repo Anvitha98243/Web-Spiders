@@ -25,7 +25,7 @@ const app = express();
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5173',
-  'https://estatehub-frontend.onrender.com', // ADD YOUR ACTUAL FRONTEND URL HERE
+  'https://rental-frontend-tyih.onrender.com', // ADD YOUR ACTUAL FRONTEND URL HERE
   process.env.FRONTEND_URL
 ];
 
