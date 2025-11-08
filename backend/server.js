@@ -381,12 +381,23 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
 // ==================== PROPERTY ROUTES ====================
 
 // Create Property (Owner only)
+// Create Property (Owner only)
 app.post('/api/properties', authMiddleware, ownerMiddleware, upload.fields([
   { name: 'images', maxCount: 10 },
   { name: 'video3D', maxCount: 1 }
 ]), async (req, res) => {
   try {
+    console.log('=== CREATE PROPERTY REQUEST ===');
+    console.log('User ID:', req.userId);
+    console.log('Body:', req.body);
+    console.log('Files:', req.files);
+
     const owner = await User.findById(req.userId);
+    if (!owner) {
+      return res.status(404).json({ message: 'Owner not found' });
+    }
+
+    console.log('Owner found:', owner.name);
     
     const propertyData = {
       ...req.body,
@@ -404,25 +415,50 @@ app.post('/api/properties', authMiddleware, ownerMiddleware, upload.fields([
       coordinates: coordinates
     };
 
+    console.log('Property data prepared:', {
+      title: propertyData.title,
+      city: propertyData.city,
+      coordinates: propertyData.location.coordinates
+    });
+
     // Get Cloudinary URLs
     if (req.files?.images) {
       propertyData.images = req.files.images.map(file => file.path);
+      console.log('Images uploaded:', propertyData.images.length);
     }
 
     if (req.files?.video3D && req.files.video3D[0]) {
       propertyData.video3D = req.files.video3D[0].path;
+      console.log('Video uploaded:', propertyData.video3D);
     }
 
     const property = new Property(propertyData);
     await property.save();
 
+    console.log('Property saved successfully:', property._id);
     res.status(201).json(property);
   } catch (error) {
-    console.error('Error creating property:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error('=== ERROR CREATING PROPERTY ===');
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    
+    if (error.name === 'ValidationError') {
+      const errors = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({ 
+        message: 'Validation error', 
+        errors: errors,
+        details: error.message 
+      });
+    }
+    
+    res.status(500).json({ 
+      message: 'Server error', 
+      error: error.message,
+      name: error.name
+    });
   }
 });
-
 // Get All Properties with Location-Based Filtering
 app.get('/api/properties', async (req, res) => {
   try {
