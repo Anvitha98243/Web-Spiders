@@ -8,19 +8,18 @@ export default defineConfig({
     outDir: 'dist',
     assetsDir: 'assets',
     sourcemap: false,
-    minify: 'esbuild', // Changed from 'terser' to 'esbuild' (faster and built-in)
+    minify: 'esbuild',
     rollupOptions: {
       output: {
         manualChunks: undefined,
       },
     },
   },
+  publicDir: 'public', // Ensure public folder is copied
   server: {
     port: 3000,
-    historyApiFallback: true,
   },
   preview: {
     port: 3000,
-    historyApiFallback: true,
   },
 })
