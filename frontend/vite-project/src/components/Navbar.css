@@ -1,17 +1,34 @@
-/* components/Navbar.css */
+/* components/Navbar.css - Enhanced */
 .navbar {
-  background-color: var(--primary-color);
+  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
   padding: 1rem 0;
-  box-shadow: var(--shadow);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   position: sticky;
   top: 0;
   z-index: 1000;
+  backdrop-filter: blur(10px);
+  animation: slideDown 0.5s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .navbar-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  width: 100%;
 }
 
 .navbar-logo {
@@ -19,10 +36,26 @@
   align-items: center;
   gap: 12px;
   color: var(--white);
-  font-size: 1.5rem;
+  font-size: 1.6rem;
   font-weight: 700;
   text-decoration: none;
-  transition: transform 0.3s ease;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.navbar-logo::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  transition: width 0.3s ease;
+}
+
+.navbar-logo:hover::after {
+  width: 100%;
 }
 
 .navbar-logo:hover {
@@ -31,31 +64,41 @@
 
 .navbar-logo svg {
   color: var(--white);
+  transition: all 0.3s ease;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.navbar-logo:hover svg {
+  transform: rotate(10deg) scale(1.1);
 }
 
 .navbar-menu {
   display: flex;
   align-items: center;
   gap: 24px;
+  flex-wrap: wrap;
 }
 
 .navbar-link {
   color: var(--white);
   text-decoration: none;
   font-weight: 500;
-  transition: color 0.3s ease;
+  font-size: 1rem;
+  transition: all 0.3s ease;
   position: relative;
+  padding: 8px 0;
 }
 
 .navbar-link::after {
   content: '';
   position: absolute;
-  bottom: -5px;
-  left: 0;
+  bottom: 0;
+  left: 50%;
   width: 0;
   height: 2px;
-  background-color: var(--accent-color);
-  transition: width 0.3s ease;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  transition: all 0.3s ease;
+  transform: translateX(-50%);
 }
 
 .navbar-link:hover::after {
@@ -63,45 +106,118 @@
 }
 
 .navbar-link:hover {
-  color: var(--accent-color);
+  color: #667eea;
+  text-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
 }
 
 .navbar-user {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   padding-left: 24px;
   border-left: 2px solid rgba(255, 255, 255, 0.2);
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .user-name {
   color: var(--white);
   font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.user-name:hover {
+  color: #667eea;
 }
 
 .user-badge {
-  background-color: var(--accent-color);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: var(--white);
-  padding: 4px 12px;
+  padding: 6px 16px;
   border-radius: 20px;
   font-size: 0.85rem;
   font-weight: 600;
   text-transform: capitalize;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  transition: all 0.3s ease;
+  animation: bounceIn 0.6s ease;
+}
+
+@keyframes bounceIn {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.user-badge:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
 }
 
 .btn-sm {
-  padding: 8px 16px;
+  padding: 8px 20px;
   font-size: 0.9rem;
+  border-radius: 25px;
+  transition: all 0.3s ease;
 }
 
 .btn-outline.btn-sm {
   border-color: var(--white);
   color: var(--white);
+  border-width: 2px;
 }
 
 .btn-outline.btn-sm:hover {
   background-color: var(--white);
   color: var(--primary-color);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(255, 255, 255, 0.3);
+}
+
+.btn-primary.btn-sm {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary.btn-sm:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+}
+
+/* Mobile Menu Toggle */
+.mobile-menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--white);
+  font-size: 1.8rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.mobile-menu-toggle:hover {
+  transform: scale(1.1);
+  color: #667eea;
 }
 
 @media (max-width: 968px) {
@@ -111,29 +227,83 @@
   }
   
   .navbar-logo span {
-    display: none;
+    font-size: 1.3rem;
   }
   
   .navbar-link {
     font-size: 0.9rem;
+  }
+
+  .navbar-user {
+    padding-left: 16px;
+  }
+
+  .user-name {
+    display: none;
   }
 }
 
 @media (max-width: 768px) {
   .navbar-container {
     flex-direction: column;
-    gap: 16px;
+    gap: 20px;
+    padding: 15px;
   }
   
   .navbar-menu {
     width: 100%;
     justify-content: center;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .navbar-link {
+    width: 100%;
+    text-align: center;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+  }
+
+  .navbar-link:hover {
+    background: rgba(102, 126, 234, 0.3);
   }
   
   .navbar-user {
     border-left: none;
+    border-top: 2px solid rgba(255, 255, 255, 0.2);
     padding-left: 0;
-    flex-wrap: wrap;
+    padding-top: 16px;
+    width: 100%;
     justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .btn-sm {
+    width: 100%;
+  }
+}
+
+/* Scroll Animation */
+.navbar.scrolled {
+  padding: 0.5rem 0;
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.2);
+}
+
+/* Loading Skeleton for Navbar */
+.navbar-skeleton {
+  height: 80px;
+  background: linear-gradient(90deg, #34495e 25%, #2c3e50 50%, #34495e 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
   }
 }

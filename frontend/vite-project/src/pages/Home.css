@@ -1,19 +1,27 @@
-/* pages/Home.css */
+/* pages/Home.css - Enhanced */
 .home {
   min-height: 100vh;
 }
 
-/* Hero Section */
+/* Hero Section with Advanced Animations */
 .hero-section {
   position: relative;
   height: 85vh;
   background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
-  background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%23ffffff" fill-opacity="0.1" d="M0,96L48,112C96,128,192,160,288,165.3C384,171,480,149,576,133.3C672,117,768,107,864,122.7C960,139,1056,181,1152,181.3C1248,181,1344,139,1392,117.3L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>');
-  background-size: cover;
-  background-position: center;
+  background-size: 400% 400%;
   display: flex;
   align-items: center;
   overflow: hidden;
+  animation: gradientAnimation 15s ease infinite;
+}
+
+@keyframes gradientAnimation {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
 }
 
 .hero-overlay {
@@ -23,38 +31,94 @@
   right: 0;
   bottom: 0;
   background: linear-gradient(135deg, rgba(44, 62, 80, 0.9) 0%, rgba(52, 152, 219, 0.8) 100%);
+  z-index: 1;
 }
 
 .hero-content {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   text-align: center;
   color: var(--white);
+  animation: heroFadeIn 1s ease;
+  width: 100%;
+}
+
+@keyframes heroFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .hero-title {
   font-size: 3.5rem;
   font-weight: 800;
   margin-bottom: 20px;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  text-shadow: 2px 4px 8px rgba(0, 0, 0, 0.3);
+  animation: titleSlideIn 0.8s ease;
+  background: linear-gradient(to right, #fff, #f0f0f0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@keyframes titleSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50px) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .hero-subtitle {
-  font-size: 1.3rem;
+  font-size: 1.4rem;
   margin-bottom: 40px;
   max-width: 700px;
   margin-left: auto;
   margin-right: auto;
-  opacity: 0.95;
+  opacity: 0;
+  animation: subtitleFadeIn 1s ease 0.3s forwards;
+  line-height: 1.8;
 }
 
-/* Property Types */
+@keyframes subtitleFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 0.95;
+    transform: translateY(0);
+  }
+}
+
+/* Property Types with Stagger Animation */
 .property-types {
   display: flex;
   flex-wrap: wrap;
   gap: 15px;
   justify-content: center;
   margin-bottom: 40px;
+  opacity: 0;
+  animation: fadeInUp 0.8s ease 0.5s forwards;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .property-type-btn {
@@ -67,35 +131,98 @@
   cursor: pointer;
   font-size: 1rem;
   font-weight: 600;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   display: flex;
   align-items: center;
   gap: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.property-type-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.property-type-btn:hover::before {
+  width: 300px;
+  height: 300px;
 }
 
 .property-type-btn:hover,
 .property-type-btn.active {
   background-color: var(--white);
   color: var(--primary-color);
-  transform: translateY(-3px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  transform: translateY(-5px) scale(1.05);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
 .property-icon {
-  font-size: 1.2rem;
+  font-size: 1.3rem;
+  transition: transform 0.3s ease;
 }
 
-/* Search Bar */
+.property-type-btn:hover .property-icon {
+  transform: rotate(360deg) scale(1.2);
+}
+
+/* Search Bar with Float Animation */
 .search-bar {
   max-width: 800px;
   margin: 0 auto;
   background-color: var(--white);
   border-radius: 50px;
   padding: 10px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
   display: flex;
   gap: 10px;
   align-items: center;
+  opacity: 0;
+  animation: searchBarFloat 1s ease 0.7s forwards;
+}
+
+@keyframes searchBarFloat {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.near-me-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 40px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.near-me-btn:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+}
+
+.near-me-btn.active {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
 }
 
 .search-input-group {
@@ -104,11 +231,17 @@
   align-items: center;
   gap: 12px;
   padding: 0 20px;
+  border-left: 2px solid #e0e0e0;
 }
 
 .search-icon {
   color: var(--primary-color);
   flex-shrink: 0;
+  transition: transform 0.3s ease;
+}
+
+.search-input-group:hover .search-icon {
+  transform: scale(1.2) rotate(10deg);
 }
 
 .search-input {
@@ -117,10 +250,16 @@
   outline: none;
   font-size: 1rem;
   color: var(--text-color);
+  background: transparent;
 }
 
 .search-input::placeholder {
   color: #999;
+  transition: color 0.3s ease;
+}
+
+.search-input:focus::placeholder {
+  color: #ccc;
 }
 
 .search-btn {
@@ -130,6 +269,13 @@
   align-items: center;
   gap: 8px;
   white-space: nowrap;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.search-btn:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
 }
 
 /* Features Section */
@@ -144,60 +290,133 @@
   font-weight: 700;
   color: var(--primary-color);
   margin-bottom: 60px;
+  position: relative;
+  animation: fadeIn 0.8s ease;
+}
+
+.section-title::after {
+  content: '';
+  position: absolute;
+  bottom: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 4px;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  border-radius: 2px;
 }
 
 .features-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 40px;
 }
 
 .feature-card {
   text-align: center;
-  padding: 30px;
+  padding: 40px 30px;
   border-radius: 16px;
   background-color: var(--light-bg);
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  animation: fadeInUp 0.6s ease;
+  animation-fill-mode: both;
+  border: 2px solid transparent;
 }
 
+.feature-card:nth-child(1) { animation-delay: 0.1s; }
+.feature-card:nth-child(2) { animation-delay: 0.2s; }
+.feature-card:nth-child(3) { animation-delay: 0.3s; }
+.feature-card:nth-child(4) { animation-delay: 0.4s; }
+.feature-card:nth-child(5) { animation-delay: 0.5s; }
+.feature-card:nth-child(6) { animation-delay: 0.6s; }
+
 .feature-card:hover {
-  transform: translateY(-10px);
-  box-shadow: var(--shadow-lg);
+  transform: translateY(-15px) scale(1.03);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  border-color: #667eea;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
 }
 
 .feature-icon {
-  font-size: 3.5rem;
+  font-size: 4rem;
   margin-bottom: 20px;
+  display: inline-block;
+  transition: transform 0.5s ease;
+}
+
+.feature-card:hover .feature-icon {
+  transform: rotateY(360deg) scale(1.2);
 }
 
 .feature-card h3 {
   font-size: 1.5rem;
   color: var(--primary-color);
   margin-bottom: 15px;
+  transition: color 0.3s ease;
+}
+
+.feature-card:hover h3 {
+  color: #667eea;
 }
 
 .feature-card p {
   color: #666;
-  line-height: 1.6;
+  line-height: 1.8;
+  transition: color 0.3s ease;
+}
+
+.feature-card:hover p {
+  color: #555;
 }
 
 /* CTA Section */
 .cta-section {
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-size: 400% 400%;
   color: var(--white);
   padding: 80px 0;
   text-align: center;
+  animation: gradientAnimation 15s ease infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-section::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+  background-size: 50px 50px;
+  animation: moveBackground 20s linear infinite;
+}
+
+@keyframes moveBackground {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(50px, 50px);
+  }
 }
 
 .cta-section h2 {
-  font-size: 2.5rem;
+  font-size: 2.8rem;
   margin-bottom: 20px;
+  position: relative;
+  z-index: 1;
+  animation: fadeIn 0.8s ease;
 }
 
 .cta-section p {
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   margin-bottom: 40px;
   opacity: 0.95;
+  position: relative;
+  z-index: 1;
+  animation: fadeIn 1s ease 0.2s backwards;
 }
 
 .cta-buttons {
@@ -205,24 +424,32 @@
   gap: 20px;
   justify-content: center;
   flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
+  animation: fadeIn 1.2s ease 0.4s backwards;
 }
 
 .btn-lg {
-  padding: 16px 40px;
+  padding: 18px 48px;
   font-size: 1.1rem;
+  border-radius: 30px;
+  transition: all 0.3s ease;
 }
 
 .cta-section .btn-outline {
   border-color: var(--white);
   color: var(--white);
+  border-width: 2px;
 }
 
 .cta-section .btn-outline:hover {
   background-color: var(--white);
-  color: var(--primary-color);
+  color: #667eea;
+  transform: translateY(-5px) scale(1.05);
+  box-shadow: 0 10px 30px rgba(255, 255, 255, 0.3);
 }
 
-/* Responsive */
+/* Responsive Design */
 @media (max-width: 968px) {
   .hero-title {
     font-size: 2.5rem;
@@ -240,16 +467,25 @@
     padding: 10px 18px;
     font-size: 0.9rem;
   }
+
+  .section-title {
+    font-size: 2rem;
+  }
 }
 
 @media (max-width: 768px) {
   .hero-section {
     height: auto;
-    padding: 60px 0;
+    padding: 80px 0;
   }
 
   .hero-title {
     font-size: 2rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1rem;
+    padding: 0 20px;
   }
 
   .search-bar {
@@ -260,28 +496,36 @@
 
   .search-input-group {
     width: 100%;
-    padding: 12px 0;
-    border-bottom: 2px solid #eee;
+    padding: 15px 0;
+    border-left: none;
+    border-bottom: 2px solid #e0e0e0;
   }
 
+  .near-me-btn,
   .search-btn {
     width: 100%;
     justify-content: center;
-  }
-
-  .section-title {
-    font-size: 2rem;
   }
 
   .cta-section h2 {
     font-size: 2rem;
   }
 
+  .cta-section p {
+    font-size: 1.1rem;
+  }
+
   .cta-buttons {
     flex-direction: column;
+    width: 100%;
+    padding: 0 20px;
   }
 
   .btn-lg {
     width: 100%;
+  }
+
+  .features-grid {
+    grid-template-columns: 1fr;
   }
 }
